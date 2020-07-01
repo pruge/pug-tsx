@@ -1,11 +1,12 @@
 {
   "compilerOptions": {
-    "target": "es2016",
+    "target": "es5",
+    "lib": ["es2019"],
     "module": "commonjs",
     "outDir": "./dist",
     "strict": true,
     "allowJs": true,
-
+    "downlevelIteration": true,
     "types": ["node"]
   },
   "include": ["./src/*"],

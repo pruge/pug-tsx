@@ -9,4 +9,6 @@ export interface IDirectivesMap {
 }
 export interface IPreprocessorOption {
   includes: string[];
+  start: string[];
+  end: string[];
 }
