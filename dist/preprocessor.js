@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.preprocessor = void 0;
 const pug_uses_variables_1 = require("pug-uses-variables");
-const xregexp_1 = require("xregexp");
+const XRegExp = require("xregexp");
 const global_1 = require("./global");
 const findComponents = (variables) => {
     return variables
@@ -12,7 +12,7 @@ const findComponents = (variables) => {
 const findPug = (content) => {
     let rst;
     try {
-        rst = xregexp_1.default.matchRecursive(content, 'pug`', '`', 'g');
+        rst = XRegExp.matchRecursive(content, 'pug`', '`', 'g');
         rst = rst.map((match) => match.replace(/\/\/.*$/gm, '').trimRight());
     }
     catch (error) {

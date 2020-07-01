@@ -1,5 +1,5 @@
 import { findVariablesInTemplate } from 'pug-uses-variables';
-import XRegExp from 'xregexp';
+import * as XRegExp from 'xregexp';
 import { DEFAULT_OPTIONS } from './global';
 import { IPreprocessorOption } from './type';
 
