@@ -18,6 +18,7 @@ const findPug = (content) => {
     catch (error) {
         rst = [];
     }
+    rst = rst.filter((item) => !/\\n/.test(item));
     return rst;
 };
 const findAllComponents = (contents) => {
@@ -34,7 +35,7 @@ const findAllComponents = (contents) => {
     }
     return [...new Set(components)];
 };
-// fs.readFile('TransitionAlerts.js', 'utf8', function (err, data) {
+// readFile('ButtonGroup.stories.tsx', 'utf8', function (err: any, data: string) {
 //   if (data) {
 //     let pugTemplate = findPug(data);
 //     let components = findAllComponents(pugTemplate);
