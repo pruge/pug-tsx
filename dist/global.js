@@ -4,5 +4,8 @@ exports.DEFAULT_OPTIONS = void 0;
 exports.DEFAULT_OPTIONS = {
     includes: ['jsx'],
     start: ['pug`', 'css`', ' `[^;]'],
-    end: ['`'],
+    // end: ['`'],
+    replace: {
+        jsx: '/** @jsx jsx */ jsx;',
+    },
 };

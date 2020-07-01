@@ -24,6 +24,7 @@ exports.preprocessor = void 0;
 var pug_uses_variables_1 = require("pug-uses-variables");
 var XRegExp = require("xregexp");
 var global_1 = require("./global");
+var pattern = { start: '', end: '`' };
 var findImportVariables = function (content) {
     var rst;
     rst = content.match(/import(.*)from/gm) || [];
@@ -44,7 +45,8 @@ var findPug = function (content) {
     var rst;
     try {
         // console.log(content);
-        rst = XRegExp.matchRecursive(content, 'pug`|css`| `[^;]', '`', 'gi');
+        rst = XRegExp.matchRecursive(content, pattern.start, pattern.end, 'gi');
+        // rst = XRegExp.matchRecursive(content, 'pug`|css`| `[^;]', '`', 'gi');
         // console.log(rst);
         // console.log('--------');
         rst = rst
@@ -117,15 +119,24 @@ var findAllComponents = function (contents) {
  * @returns {string}
  */
 function preprocessor(content) {
-    var includes = getOptions(this.query).includes;
+    var _a = getOptions(this.query), includes = _a.includes, replace = _a.replace;
     var components = findAllComponents(findPug(content));
     var importVarialbles = findImportVariables(content);
     var intersection = components.filter(function (item) {
         return importVarialbles.includes(item);
     });
+    // 문서에 포함된 것 만.
     includes = includes.filter(function (item) { return content.includes(item); });
     intersection = __spread(intersection, includes);
     intersection = __spread(new Set(intersection));
+    intersection = intersection.map(function (item) {
+        if (replace[item]) {
+            return replace[item];
+        }
+        else {
+            return item;
+        }
+    });
     if (intersection.length !== 0) {
         return intersection.join(';\n') + ";\n" + content;
     }
@@ -135,6 +146,15 @@ function preprocessor(content) {
 }
 exports.preprocessor = preprocessor;
 function getOptions(query) {
-    var options = Object.assign({}, global_1.DEFAULT_OPTIONS, query);
+    var options = global_1.DEFAULT_OPTIONS;
+    options.includes = mergeDedupe([options.includes, query.includes || []]);
+    options.start = mergeDedupe([options.start, query.start || []]);
+    // options.end = mergeDedupe([options.end, query.end || []]);
+    options.replace = Object.assign({}, options.replace, query.replace || {});
+    // console.log('options', options);
+    pattern.start = options.start.join('|');
     return options;
+}
+function mergeDedupe(arr) {
+    return __spread(new Set([].concat.apply([], __spread(arr))));
 }
