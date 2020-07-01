@@ -129,7 +129,7 @@ export function preprocessor(
   );
 
   // 문서에 포함된 것 만.
-  includes = includes.filter((item) => content.includes(item));
+  includes = includes.filter((item) => importVarialbles.includes(item));
   intersection = [...intersection, ...includes];
   intersection = [...new Set(intersection)];
   intersection = intersection.map((item: string) => {

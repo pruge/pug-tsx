@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DEFAULT_OPTIONS = void 0;
 exports.DEFAULT_OPTIONS = {
-    includes: ['jsx'],
+    includes: ['jsx', 'React'],
     start: ['pug`', 'css`', ' `[^;]'],
     // end: ['`'],
     replace: {

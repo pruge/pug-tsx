@@ -65,7 +65,7 @@ module.exports = {
 
 > type: `string[]`
 >
-> default: `['jsx']`
+> default: `['jsx', 'React']`
 
 Variable that must be included among imported libs.
 
