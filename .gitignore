@@ -1,3 +1,4 @@
 node_modules
 yarn-error.log
 mock/mock.gen.js
+.vscode

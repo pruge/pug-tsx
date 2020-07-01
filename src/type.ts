@@ -10,5 +10,6 @@ export interface IDirectivesMap {
 export interface IPreprocessorOption {
   includes: string[];
   start: string[];
-  end: string[];
+  // end: string[];
+  replace: IParamsMap;
 }

@@ -8,6 +8,8 @@ export interface IWebpackLoaderContext {
   query: IPreprocessorOption;
 }
 
+let pattern = { start: '', end: '`' };
+
 const findImportVariables = (content: string): string[] => {
   let rst: any[];
   rst = content.match(/import(.*)from/gm) || [];
@@ -33,7 +35,8 @@ const findPug = (content: string) => {
   let rst;
   try {
     // console.log(content);
-    rst = XRegExp.matchRecursive(content, 'pug`|css`| `[^;]', '`', 'gi');
+    rst = XRegExp.matchRecursive(content, pattern.start, pattern.end, 'gi');
+    // rst = XRegExp.matchRecursive(content, 'pug`|css`| `[^;]', '`', 'gi');
     // console.log(rst);
     // console.log('--------');
     rst = rst
@@ -118,16 +121,24 @@ export function preprocessor(
   this: IWebpackLoaderContext,
   content: string,
 ): string {
-  let { includes } = getOptions(this.query);
+  let { includes, replace } = getOptions(this.query);
   const components = findAllComponents(findPug(content));
   const importVarialbles = findImportVariables(content);
   let intersection = components.filter((item) =>
     importVarialbles.includes(item),
   );
 
+  // 문서에 포함된 것 만.
   includes = includes.filter((item) => content.includes(item));
   intersection = [...intersection, ...includes];
   intersection = [...new Set(intersection)];
+  intersection = intersection.map((item: string) => {
+    if (replace[item]) {
+      return replace[item];
+    } else {
+      return item;
+    }
+  });
 
   if (intersection.length !== 0) {
     return `${intersection.join(';\n')};\n${content}`;
@@ -137,11 +148,19 @@ export function preprocessor(
 }
 
 function getOptions(query: Partial<IPreprocessorOption>): IPreprocessorOption {
-  const options: IPreprocessorOption = Object.assign(
-    {},
-    DEFAULT_OPTIONS,
-    query,
-  );
+  const options: IPreprocessorOption = DEFAULT_OPTIONS;
+  options.includes = mergeDedupe([options.includes, query.includes || []]);
+  options.start = mergeDedupe([options.start, query.start || []]);
+  // options.end = mergeDedupe([options.end, query.end || []]);
+  options.replace = Object.assign({}, options.replace, query.replace || {});
+
+  // console.log('options', options);
+
+  pattern.start = options.start.join('|');
 
   return options;
+}
+
+function mergeDedupe(arr: any[]): string[] {
+  return [...new Set([].concat(...arr))];
 }
