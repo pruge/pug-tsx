@@ -1,9 +1,7 @@
 import React from 'react';
-import ButtonGroup from './ButtonGroup';
-import Button from '@components/base/Button/Button';
+import Button from '@components/Button';
+import ButtonGroup from '@components/ButtonGroup';
 import { withKnobs, text, radios, boolean } from '@storybook/addon-knobs';
-
-// Button;
 
 export default {
   title: 'components/base/ButtonGroup',
@@ -62,3 +60,12 @@ export const customGapColumn = () => {
       Button CLICK ME
   `;
 };
+
+// export const customGapColumn2 = () => {
+//   return (
+//     <ButtonGroup direction="column" gap="1rem">
+//       <Button>CLICK ME</Button>
+//       <Button>CLICK ME</Button>
+//     </ButtonGroup>
+//   );
+// };

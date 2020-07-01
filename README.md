@@ -73,7 +73,7 @@ Variable that must be included among imported libs.
 
 > type: `{[key: string]: string}`
 >
-> default: `{'jsx': '/** @jsx jsx */ jsx;'}`
+> default: `{'jsx': '/** @jsx jsx */ jsx'}`
 
 When you need to transform the variable declared in includes.
 
@@ -84,7 +84,7 @@ When you need to transform the variable declared in includes.
   loader: 'webpack-preprocessor-loader',
   options: {
     replace: {
-      jsx: '/** @jsx jsx */ jsx;',
+      jsx: '/** @jsx jsx */ jsx',
     },
   },
 },
@@ -206,9 +206,9 @@ import { jsx, css } from '@emotion/core';
 ## Sample Project
 
 ```bash
-git clone ....
+git clone git@github.com:pruge/storybook-tutorial.git
 yarn
-yarn story
+yarn storybook
 ```
 
 ## Lisense
