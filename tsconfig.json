@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "target": "es2016",
+    "module": "commonjs",
+    "outDir": "./dist",
+    "strict": true,
+    "allowJs": true,
+
+    "types": ["node"]
+  },
+  "include": ["./src/*"],
+  "files": ["src/typings.d.ts"]
+}

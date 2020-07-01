@@ -1,0 +1,43 @@
+{
+  "name": "webpack-preprocessor-pug-tsx",
+  "version": "1.0.0",
+  "description": "A code preprocessor for Webpack",
+  "main": "index.js",
+  "repository": "https://github.com/pruge/pug-tsx.git",
+  "author": "Prugehada <strive1024@gmail.com>",
+  "license": "MIT",
+  "engines": {
+    "node": ">=6.11.5"
+  },
+  "homepage": "https://github.com/pruge/pug-tsx",
+  "keywords": [
+    "webpack",
+    "loader",
+    "preprocessor",
+    "preprocess",
+    "precompile"
+  ],
+  "files": [
+    "dist/",
+    "index.js"
+  ],
+  "scripts": {
+    "mock": "node ./mock/build.js",
+    "build": "tsc",
+    "test": "mocha",
+    "prepare": "yarn build"
+  },
+  "dependencies": {
+    "pug-uses-variables": "^3.0.1",
+    "xregexp": "^4.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^10.0.6",
+    "chai": "^4.1.2",
+    "eslint": "^4.19.1",
+    "mocha": "^5.1.1",
+    "tslint": "^5.10.0",
+    "typescript": "^2.8.3",
+    "webpack": "^4.29.4"
+  }
+}
