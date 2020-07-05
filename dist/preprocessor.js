@@ -46,6 +46,20 @@ exports.findVarsInImport = function (content) {
 var stripVars = function (variables) {
     return variables.map(function (variable) { return variable.value; });
 };
+var stripPattern = function (content) {
+    try {
+        // const exclude = XRegExp.matchRecursive(content, '\\$\\{|\\{', '\\}', 'gi');
+        var exclude = XRegExp.matchRecursive(content, '\\$\\{|\\{|#\\{', '\\}', 'gi');
+        // console.log('exclude', exclude);
+        exclude.forEach(function (item) {
+            content = content.replace(item, '');
+        });
+    }
+    catch (error) {
+        console.error(error);
+    }
+    return content.replace(/\$\{\}|#\{\}/gm, 'test');
+};
 /**
  * backtick이 포함된 문자열 추출
  */
@@ -68,28 +82,31 @@ exports.findAllBacktickTemplate = function (content, pattern) {
  */
 exports.findVarsInPug = function (contents, pattern) {
     var usedVars = [];
-    var _loop_1 = function () {
+    for (var i = 0; i < contents.length; i++) {
         var content = contents[i];
         var pugTemplates = exports.findAllBacktickTemplate(content, pattern);
-        var exclude = [];
+        var variables = void 0;
         try {
+            // 내부에 pug`가 또 있다면,
             if (/pug`([\w\s\S]*)`/.test(content)) {
                 usedVars = usedVars.concat(exports.findVarsInPug(pugTemplates, pattern));
                 content = content.replace(/pug`([\w\s\S]*)`/, '');
-                exclude = XRegExp.matchRecursive(content, '\\$\\{|\\{', '\\}', 'gi');
-                exclude.forEach(function (item) {
-                    content = content.replace(item, '');
-                });
-                content = content.replace(/\$\{\}/, 'test');
+                content = stripPattern(content);
             }
-            usedVars = usedVars.concat(stripVars(pug_uses_variables_1.findVariablesInTemplate(content)));
+            try {
+                variables = pug_uses_variables_1.findVariablesInTemplate(content);
+                usedVars = usedVars.concat(stripVars(variables));
+            }
+            catch (error) {
+                // 내부에 ${!content || $vars} 함수를 쓴것이 문제가 된다.
+                content = stripPattern(content);
+                variables = pug_uses_variables_1.findVariablesInTemplate(content);
+                usedVars = usedVars.concat(stripVars(variables));
+            }
         }
         catch (error) {
             // console.error(error);
         }
-    };
-    for (var i = 0; i < contents.length; i++) {
-        _loop_1();
     }
     return __spread(new Set(usedVars));
 };

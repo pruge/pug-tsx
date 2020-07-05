@@ -9,16 +9,6 @@ const {
 } = require('../dist/preprocessor');
 const fs = require('fs');
 
-// const files = [
-//   './components/Button/index.tsx',
-//   './components/Button/Button.stories.tsx',
-//   './components/ButtonGroup/index.tsx',
-//   './components/ButtonGroup/ButtonGroup.stories.tsx',
-//   './components/Dialog/index.tsx',
-//   './components/Dialog/Dialog.stories.tsx',
-//   './pages/[id].tsx',
-// ];
-
 describe('pug-tsx', () => {
   describe('./test/components/Button/index.tsx', () => {
     let importedVars, usedVars, intersectedVars;
@@ -357,6 +347,52 @@ describe('pug-tsx', () => {
         'ReactMarkdown',
         'React',
       ]);
+    });
+  });
+
+  describe('./test/pages/create.tsx', () => {
+    let importedVars, usedVars, intersectedVars;
+    let content, options;
+
+    before(() => {
+      const file = './test/pages/create.tsx';
+      content = fs.readFileSync(file, 'utf8');
+      options = getOptions({});
+    });
+
+    it('findVarsInImport', () => {
+      importedVars = findVarsInImport(content);
+      expect(importedVars).to.have.members([
+        'React',
+        'useState',
+        'fetch',
+        'makeStyles',
+        'Layout',
+        'Router',
+      ]);
+    });
+
+    it('findVarsInPug', () => {
+      let { pattern } = options;
+      usedVars = findVarsInPug(
+        findAllBacktickTemplate(content, pattern),
+        pattern,
+      );
+      expect(usedVars).to.have.members([
+        'Layout',
+        'classes',
+        'submitData',
+        'test',
+        'title',
+        'authorEmail',
+        'content',
+      ]);
+    });
+
+    it('getIntersectedVars', () => {
+      let { includes } = options;
+      intersectedVars = getIntersectedVars(usedVars, importedVars, includes);
+      expect(intersectedVars).to.have.members(['Layout', 'React']);
     });
   });
 });

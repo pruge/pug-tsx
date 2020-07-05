@@ -35,6 +35,25 @@ const stripVars = (variables: any[]): string[] => {
   return variables.map((variable: any) => variable.value);
 };
 
+const stripPattern = (content: string): string => {
+  try {
+    // const exclude = XRegExp.matchRecursive(content, '\\$\\{|\\{', '\\}', 'gi');
+    const exclude = XRegExp.matchRecursive(
+      content,
+      '\\$\\{|\\{|#\\{',
+      '\\}',
+      'gi',
+    );
+    // console.log('exclude', exclude);
+    exclude.forEach((item: string) => {
+      content = content.replace(item, '');
+    });
+  } catch (error) {
+    console.error(error);
+  }
+  return content.replace(/\$\{\}|#\{\}/gm, 'test');
+};
+
 /**
  * backtick이 포함된 문자열 추출
  */
@@ -51,6 +70,7 @@ export const findAllBacktickTemplate = (content: string, pattern: IPattern) => {
     );
     throw error;
   }
+
   return rst;
 };
 
@@ -63,20 +83,25 @@ export const findVarsInPug = (contents: any[], pattern: IPattern): string[] => {
   for (var i = 0; i < contents.length; i++) {
     let content: string = contents[i];
     const pugTemplates = findAllBacktickTemplate(content, pattern);
-    let exclude = [];
+    let variables;
 
     try {
+      // 내부에 pug`가 또 있다면,
       if (/pug`([\w\s\S]*)`/.test(content)) {
         usedVars = usedVars.concat(findVarsInPug(pugTemplates, pattern));
         content = content.replace(/pug`([\w\s\S]*)`/, '');
-        exclude = XRegExp.matchRecursive(content, '\\$\\{|\\{', '\\}', 'gi');
-        exclude.forEach((item: string) => {
-          content = content.replace(item, '');
-        });
-        content = content.replace(/\$\{\}/, 'test');
+        content = stripPattern(content);
       }
 
-      usedVars = usedVars.concat(stripVars(findVariablesInTemplate(content)));
+      try {
+        variables = findVariablesInTemplate(content);
+        usedVars = usedVars.concat(stripVars(variables));
+      } catch (error) {
+        // 내부에 ${!content || $vars} 함수를 쓴것이 문제가 된다.
+        content = stripPattern(content);
+        variables = findVariablesInTemplate(content);
+        usedVars = usedVars.concat(stripVars(variables));
+      }
     } catch (error) {
       // console.error(error);
     }
