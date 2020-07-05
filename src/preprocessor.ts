@@ -1,16 +1,17 @@
 import { findVariablesInTemplate } from 'pug-uses-variables';
 import * as XRegExp from 'xregexp';
 import { DEFAULT_OPTIONS } from './global';
-import { IPreprocessorOption } from './type';
+import { IPreprocessorOption, IPattern } from './type';
 import { readFile } from 'fs';
 
 export interface IWebpackLoaderContext {
   query: IPreprocessorOption;
 }
 
-let pattern = { start: '', end: '`' };
-
-const findImportVariables = (content: string): string[] => {
+/**
+ * import한 liabrary의 변수를 추출한다.
+ */
+export const findVarsInImport = (content: string): string[] => {
   let rst: any[];
   rst = content.match(/import(.*)from/gm) || [];
   rst = rst.map((item) => {
@@ -27,40 +28,46 @@ const findImportVariables = (content: string): string[] => {
   return rst;
 };
 
-const findComponents = (variables: any[]): string[] => {
+/**
+ * value 값 배열로 변환
+ */
+const stripVars = (variables: any[]): string[] => {
   return variables.map((variable: any) => variable.value);
 };
 
-const findPug = (content: string) => {
+/**
+ * backtick이 포함된 문자열 추출
+ */
+export const findAllBacktickTemplate = (content: string, pattern: IPattern) => {
   let rst;
   try {
-    // console.log(content);
     rst = XRegExp.matchRecursive(content, pattern.start, pattern.end, 'gi');
-    // rst = XRegExp.matchRecursive(content, 'pug`|css`| `[^;]', '`', 'gi');
-    // console.log(rst);
-    // console.log('--------');
     rst = rst
       .map((match: string) => match.replace(/\/\/.*$/gm, '').trim())
       .filter((item: string) => !/\\n/.test(item));
   } catch (error) {
-    rst = [];
-    // console.log(error);
+    console.error(
+      '[pug-tsx] options.start에 backtick 시작 문자열을 등록하세요.',
+    );
+    throw error;
   }
-
   return rst;
 };
 
-const findAllComponents = (contents: any[]): string[] => {
-  let components: string[] = [];
+/**
+ * pug` `에서 사용된 변수 추출
+ */
+export const findVarsInPug = (contents: any[], pattern: IPattern): string[] => {
+  let usedVars: string[] = [];
 
   for (var i = 0; i < contents.length; i++) {
     let content: string = contents[i];
-    const pugTemplates = findPug(content);
+    const pugTemplates = findAllBacktickTemplate(content, pattern);
     let exclude = [];
 
     try {
       if (/pug`([\w\s\S]*)`/.test(content)) {
-        components = components.concat(findAllComponents(pugTemplates));
+        usedVars = usedVars.concat(findVarsInPug(pugTemplates, pattern));
         content = content.replace(/pug`([\w\s\S]*)`/, '');
         exclude = XRegExp.matchRecursive(content, '\\$\\{|\\{', '\\}', 'gi');
         exclude.forEach((item: string) => {
@@ -69,45 +76,34 @@ const findAllComponents = (contents: any[]): string[] => {
         content = content.replace(/\$\{\}/, 'test');
       }
 
-      // console.log('--------');
-      // console.log(content);
-      // console.log('--------');
-
-      components = components.concat(
-        findComponents(findVariablesInTemplate(content)),
-      );
+      usedVars = usedVars.concat(stripVars(findVariablesInTemplate(content)));
     } catch (error) {
       // console.error(error);
     }
   }
 
-  return [...new Set(components)];
+  return [...new Set(usedVars)];
 };
 
-// const files = [
-//   // 'TransitionAlerts.js',
-//   // 'ButtonGroup.stories.tsx',
-//   'Dialog.tsx',
-// ];
-// files.forEach((file) => {
-//   readFile(file, 'utf8', function (err: any, data: string) {
-//     if (data) {
-//       const components = findAllComponents(findPug(data));
-//       console.log(file, components);
+/**
+ * pug에서 사용된 변수들: usedVars
+ * import 된 변수들: importedVars
+ * options.includes : includes
+ *
+ * 교차된 변수 추출
+ */
+export const getIntersectedVars = (
+  usedVars: string[],
+  importedVars: string[],
+  includes: string[],
+): string[] => {
+  let intersection = usedVars.filter((item) => importedVars.includes(item));
+  includes = includes.filter((item) => importedVars.includes(item));
+  intersection = [...intersection, ...includes];
+  intersection = [...new Set(intersection)];
 
-//       const importVarialbles = findImportVariables(data);
-//       console.log('import', importVarialbles);
-
-//       const intersection = components.filter((item) =>
-//         importVarialbles.includes(item),
-//       );
-//       console.log('intersection', intersection);
-
-//       // let cssTemplate = findExclude(data);
-//       // console.log(cssTemplate);
-//     }
-//   });
-// });
+  return intersection;
+};
 
 /**
  * The preprocessor
@@ -121,18 +117,15 @@ export function preprocessor(
   this: IWebpackLoaderContext,
   content: string,
 ): string {
-  let { includes, replace } = getOptions(this.query);
-  const components = findAllComponents(findPug(content));
-  const importVarialbles = findImportVariables(content);
-  let intersection = components.filter((item) =>
-    importVarialbles.includes(item),
+  let { includes, replace, pattern } = getOptions(this.query);
+  const usedVars = findVarsInPug(
+    findAllBacktickTemplate(content, pattern),
+    pattern,
   );
+  const importedVars = findVarsInImport(content);
+  const intersectedVars = getIntersectedVars(usedVars, importedVars, includes);
 
-  // 문서에 포함된 것 만.
-  includes = includes.filter((item) => importVarialbles.includes(item));
-  intersection = [...intersection, ...includes];
-  intersection = [...new Set(intersection)];
-  intersection = intersection.map((item: string) => {
+  const replacedVars = intersectedVars.map((item: string) => {
     if (replace[item]) {
       return replace[item];
     } else {
@@ -140,23 +133,25 @@ export function preprocessor(
     }
   });
 
-  if (intersection.length !== 0) {
-    return `${intersection.join(';\n')};\n${content}`;
+  if (replacedVars.length !== 0) {
+    return `${replacedVars.join(';\n')};\n${content}`;
   } else {
     return content;
   }
 }
 
-function getOptions(query: Partial<IPreprocessorOption>): IPreprocessorOption {
+export function getOptions(
+  query: Partial<IPreprocessorOption>,
+): IPreprocessorOption {
   const options: IPreprocessorOption = DEFAULT_OPTIONS;
   options.includes = mergeDedupe([options.includes, query.includes || []]);
   options.start = mergeDedupe([options.start, query.start || []]);
-  // options.end = mergeDedupe([options.end, query.end || []]);
   options.replace = Object.assign({}, options.replace, query.replace || {});
 
-  // console.log('options', options);
-
-  pattern.start = options.start.join('|');
+  options.pattern = {
+    start: options.start.join('|'),
+    end: options.end,
+  };
 
   return options;
 }

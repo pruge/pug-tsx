@@ -1,29 +1,30 @@
 /* eslint-disable no-console */
 const webpack = require('webpack');
 
-webpack({
+webpack(
+  {
     mode: 'none',
-    entry: "./mock/mock.js",
+    entry: './mock/mock.js',
     output: {
-        filename: "mock.gen.js",
-        path: __dirname,
+      filename: 'mock.gen.js',
+      path: __dirname,
     },
     module: {
-        rules: [
+      rules: [
+        {
+          test: /\.(ts|tsx)$/,
+          use: [
             {
-                test: /\.js$/,
-                use: [
-                    {
-                        loader: 'webpack-preprocessor-loader',
-                        options: {
-                            debug: false,
-                        },
-                    },
-                ],
+              loader: 'webpack-preprocessor-pug-tsx',
+              options: {},
             },
-        ],
+          ],
+        },
+      ],
     },
-}, (err, stats) => {
+  },
+  (err, stats) => {
     console.log(stats.toString({ colors: true }));
     console.log(err);
-});
+  },
+);

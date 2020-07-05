@@ -20,12 +20,14 @@ var __spread = (this && this.__spread) || function () {
     return ar;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.preprocessor = void 0;
+exports.getOptions = exports.preprocessor = exports.getIntersectedVars = exports.findVarsInPug = exports.findAllBacktickTemplate = exports.findVarsInImport = void 0;
 var pug_uses_variables_1 = require("pug-uses-variables");
 var XRegExp = require("xregexp");
 var global_1 = require("./global");
-var pattern = { start: '', end: '`' };
-var findImportVariables = function (content) {
+/**
+ * import한 liabrary의 변수를 추출한다.
+ */
+exports.findVarsInImport = function (content) {
     var rst;
     rst = content.match(/import(.*)from/gm) || [];
     rst = rst.map(function (item) {
@@ -38,36 +40,41 @@ var findImportVariables = function (content) {
     rst = rst.flat(Infinity).map(function (item) { return item.trim(); });
     return rst;
 };
-var findComponents = function (variables) {
+/**
+ * value 값 배열로 변환
+ */
+var stripVars = function (variables) {
     return variables.map(function (variable) { return variable.value; });
 };
-var findPug = function (content) {
+/**
+ * backtick이 포함된 문자열 추출
+ */
+exports.findAllBacktickTemplate = function (content, pattern) {
     var rst;
     try {
-        // console.log(content);
         rst = XRegExp.matchRecursive(content, pattern.start, pattern.end, 'gi');
-        // rst = XRegExp.matchRecursive(content, 'pug`|css`| `[^;]', '`', 'gi');
-        // console.log(rst);
-        // console.log('--------');
         rst = rst
             .map(function (match) { return match.replace(/\/\/.*$/gm, '').trim(); })
             .filter(function (item) { return !/\\n/.test(item); });
     }
     catch (error) {
-        rst = [];
-        // console.log(error);
+        console.error('[pug-tsx] options.start에 backtick 시작 문자열을 등록하세요.');
+        throw error;
     }
     return rst;
 };
-var findAllComponents = function (contents) {
-    var components = [];
+/**
+ * pug` `에서 사용된 변수 추출
+ */
+exports.findVarsInPug = function (contents, pattern) {
+    var usedVars = [];
     var _loop_1 = function () {
         var content = contents[i];
-        var pugTemplates = findPug(content);
+        var pugTemplates = exports.findAllBacktickTemplate(content, pattern);
         var exclude = [];
         try {
             if (/pug`([\w\s\S]*)`/.test(content)) {
-                components = components.concat(findAllComponents(pugTemplates));
+                usedVars = usedVars.concat(exports.findVarsInPug(pugTemplates, pattern));
                 content = content.replace(/pug`([\w\s\S]*)`/, '');
                 exclude = XRegExp.matchRecursive(content, '\\$\\{|\\{', '\\}', 'gi');
                 exclude.forEach(function (item) {
@@ -75,10 +82,7 @@ var findAllComponents = function (contents) {
                 });
                 content = content.replace(/\$\{\}/, 'test');
             }
-            // console.log('--------');
-            // console.log(content);
-            // console.log('--------');
-            components = components.concat(findComponents(pug_uses_variables_1.findVariablesInTemplate(content)));
+            usedVars = usedVars.concat(stripVars(pug_uses_variables_1.findVariablesInTemplate(content)));
         }
         catch (error) {
             // console.error(error);
@@ -87,29 +91,22 @@ var findAllComponents = function (contents) {
     for (var i = 0; i < contents.length; i++) {
         _loop_1();
     }
-    return __spread(new Set(components));
+    return __spread(new Set(usedVars));
 };
-// const files = [
-//   // 'TransitionAlerts.js',
-//   // 'ButtonGroup.stories.tsx',
-//   'Dialog.tsx',
-// ];
-// files.forEach((file) => {
-//   readFile(file, 'utf8', function (err: any, data: string) {
-//     if (data) {
-//       const components = findAllComponents(findPug(data));
-//       console.log(file, components);
-//       const importVarialbles = findImportVariables(data);
-//       console.log('import', importVarialbles);
-//       const intersection = components.filter((item) =>
-//         importVarialbles.includes(item),
-//       );
-//       console.log('intersection', intersection);
-//       // let cssTemplate = findExclude(data);
-//       // console.log(cssTemplate);
-//     }
-//   });
-// });
+/**
+ * pug에서 사용된 변수들: usedVars
+ * import 된 변수들: importedVars
+ * options.includes : includes
+ *
+ * 교차된 변수 추출
+ */
+exports.getIntersectedVars = function (usedVars, importedVars, includes) {
+    var intersection = usedVars.filter(function (item) { return importedVars.includes(item); });
+    includes = includes.filter(function (item) { return importedVars.includes(item); });
+    intersection = __spread(intersection, includes);
+    intersection = __spread(new Set(intersection));
+    return intersection;
+};
 /**
  * The preprocessor
  *
@@ -119,17 +116,11 @@ var findAllComponents = function (contents) {
  * @returns {string}
  */
 function preprocessor(content) {
-    var _a = getOptions(this.query), includes = _a.includes, replace = _a.replace;
-    var components = findAllComponents(findPug(content));
-    var importVarialbles = findImportVariables(content);
-    var intersection = components.filter(function (item) {
-        return importVarialbles.includes(item);
-    });
-    // 문서에 포함된 것 만.
-    includes = includes.filter(function (item) { return importVarialbles.includes(item); });
-    intersection = __spread(intersection, includes);
-    intersection = __spread(new Set(intersection));
-    intersection = intersection.map(function (item) {
+    var _a = getOptions(this.query), includes = _a.includes, replace = _a.replace, pattern = _a.pattern;
+    var usedVars = exports.findVarsInPug(exports.findAllBacktickTemplate(content, pattern), pattern);
+    var importedVars = exports.findVarsInImport(content);
+    var intersectedVars = exports.getIntersectedVars(usedVars, importedVars, includes);
+    var replacedVars = intersectedVars.map(function (item) {
         if (replace[item]) {
             return replace[item];
         }
@@ -137,8 +128,8 @@ function preprocessor(content) {
             return item;
         }
     });
-    if (intersection.length !== 0) {
-        return intersection.join(';\n') + ";\n" + content;
+    if (replacedVars.length !== 0) {
+        return replacedVars.join(';\n') + ";\n" + content;
     }
     else {
         return content;
@@ -149,12 +140,14 @@ function getOptions(query) {
     var options = global_1.DEFAULT_OPTIONS;
     options.includes = mergeDedupe([options.includes, query.includes || []]);
     options.start = mergeDedupe([options.start, query.start || []]);
-    // options.end = mergeDedupe([options.end, query.end || []]);
     options.replace = Object.assign({}, options.replace, query.replace || {});
-    // console.log('options', options);
-    pattern.start = options.start.join('|');
+    options.pattern = {
+        start: options.start.join('|'),
+        end: options.end,
+    };
     return options;
 }
+exports.getOptions = getOptions;
 function mergeDedupe(arr) {
     return __spread(new Set([].concat.apply([], __spread(arr))));
 }

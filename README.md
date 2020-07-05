@@ -2,9 +2,11 @@
 
 [![Version][version-badge]][npm]
 [![Node][node-badge]][node]
-![Downloads][download-badge]
 [![License][license-badge]][license]
-[![Build Status][travis-badge]][travis]
+
+<!-- ![Downloads][download-badge] -->
+
+<!-- [![Build Status][travis-badge]][travis] -->
 
 Bring the awesome "pug in typescript" to the Webpack, and more.
 
@@ -81,7 +83,7 @@ When you need to transform the variable declared in includes.
 // In webpack config...
 
 {
-  loader: 'webpack-preprocessor-loader',
+  loader: 'webpack-preprocessor-pug-tsx',
   options: {
     replace: {
       jsx: '/** @jsx jsx */ jsx',
@@ -95,7 +97,7 @@ When you need to transform the variable declared in includes.
 ```
 > type: string[]
 >
-> default: ['pug`', 'css`', ' `[^;]']
+> default: ['pug`', 'css`', ' `[^;,]', '\\(`']
 ```
 
 Specifies the starting string of the element containing the backtick.
@@ -179,7 +181,7 @@ So, you need to add the following to the start of options.
 
 ```javascript
 {
-  loader: 'webpack-preprocessor-pub-tsx',
+  loader: 'webpack-preprocessor-pug-tsx',
   options: {
     start: ['button`'],
   },
