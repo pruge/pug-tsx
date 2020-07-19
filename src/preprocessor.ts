@@ -2,7 +2,9 @@ import { findVariablesInTemplate } from 'pug-uses-variables';
 import * as XRegExp from 'xregexp';
 import { DEFAULT_OPTIONS } from './global';
 import { IPreprocessorOption, IPattern } from './type';
-import { readFile } from 'fs';
+import debug from 'debug';
+
+const logPug = debug('vars:inPug');
 
 export interface IWebpackLoaderContext {
   query: IPreprocessorOption;
@@ -44,7 +46,6 @@ const stripPattern = (content: string): string => {
       '\\}',
       'gi',
     );
-    // console.log('exclude', exclude);
     exclude.forEach((item: string) => {
       content = content.replace(item, '');
     });
@@ -71,6 +72,7 @@ export const findAllBacktickTemplate = (content: string, pattern: IPattern) => {
     throw error;
   }
 
+  logPug(rst);
   return rst;
 };
 
@@ -85,15 +87,23 @@ export const findVarsInPug = (contents: any[], pattern: IPattern): string[] => {
     const pugTemplates = findAllBacktickTemplate(content, pattern);
     let variables;
 
+    logPug(pugTemplates);
+
     try {
       // 내부에 pug`가 또 있다면,
       if (/pug`([\w\s\S]*)`/.test(content)) {
         usedVars = usedVars.concat(findVarsInPug(pugTemplates, pattern));
-        content = content.replace(/pug`([\w\s\S]*)`/, '');
+
+        // 내부 ${pub``} 제거
+        pugTemplates.forEach((pug: string) => {
+          content = content.replace(pug, '');
+        });
+        content = content.replace(/pug``/, '');
         content = stripPattern(content);
       }
 
       try {
+        logPug(content);
         variables = findVariablesInTemplate(content);
         usedVars = usedVars.concat(stripVars(variables));
       } catch (error) {
@@ -104,6 +114,7 @@ export const findVarsInPug = (contents: any[], pattern: IPattern): string[] => {
       }
     } catch (error) {
       // console.error(error);
+      logPug(error);
     }
   }
 

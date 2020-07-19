@@ -24,6 +24,8 @@ exports.getOptions = exports.preprocessor = exports.getIntersectedVars = exports
 var pug_uses_variables_1 = require("pug-uses-variables");
 var XRegExp = require("xregexp");
 var global_1 = require("./global");
+var debug_1 = require("debug");
+var logPug = debug_1.default('vars:inPug');
 /**
  * import한 liabrary의 변수를 추출한다.
  */
@@ -50,7 +52,6 @@ var stripPattern = function (content) {
     try {
         // const exclude = XRegExp.matchRecursive(content, '\\$\\{|\\{', '\\}', 'gi');
         var exclude = XRegExp.matchRecursive(content, '\\$\\{|\\{|#\\{', '\\}', 'gi');
-        // console.log('exclude', exclude);
         exclude.forEach(function (item) {
             content = content.replace(item, '');
         });
@@ -75,6 +76,7 @@ exports.findAllBacktickTemplate = function (content, pattern) {
         console.error('[pug-tsx] options.start에 backtick 시작 문자열을 등록하세요.');
         throw error;
     }
+    logPug(rst);
     return rst;
 };
 /**
@@ -82,18 +84,24 @@ exports.findAllBacktickTemplate = function (content, pattern) {
  */
 exports.findVarsInPug = function (contents, pattern) {
     var usedVars = [];
-    for (var i = 0; i < contents.length; i++) {
+    var _loop_1 = function () {
         var content = contents[i];
         var pugTemplates = exports.findAllBacktickTemplate(content, pattern);
         var variables = void 0;
+        logPug(pugTemplates);
         try {
             // 내부에 pug`가 또 있다면,
             if (/pug`([\w\s\S]*)`/.test(content)) {
                 usedVars = usedVars.concat(exports.findVarsInPug(pugTemplates, pattern));
-                content = content.replace(/pug`([\w\s\S]*)`/, '');
+                // 내부 ${pub``} 제거
+                pugTemplates.forEach(function (pug) {
+                    content = content.replace(pug, '');
+                });
+                content = content.replace(/pug``/, '');
                 content = stripPattern(content);
             }
             try {
+                logPug(content);
                 variables = pug_uses_variables_1.findVariablesInTemplate(content);
                 usedVars = usedVars.concat(stripVars(variables));
             }
@@ -106,7 +114,11 @@ exports.findVarsInPug = function (contents, pattern) {
         }
         catch (error) {
             // console.error(error);
+            logPug(error);
         }
+    };
+    for (var i = 0; i < contents.length; i++) {
+        _loop_1();
     }
     return __spread(new Set(usedVars));
 };

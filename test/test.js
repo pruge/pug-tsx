@@ -395,4 +395,35 @@ describe('pug-tsx', () => {
       expect(intersectedVars).to.have.members(['Layout', 'React']);
     });
   });
+
+  // describe('./test/pages/temp.tsx', () => {
+  //   let importedVars, usedVars, intersectedVars;
+  //   let content, options;
+
+  //   before(() => {
+  //     const file = './test/pages/temp.tsx';
+  //     content = fs.readFileSync(file, 'utf8');
+  //     options = getOptions({ start: ['gql`', '\\{`'] });
+  //   });
+
+  //   it('findVarsInImport', () => {
+  //     importedVars = findVarsInImport(content);
+  //     expect(importedVars).to.have.members([]);
+  //   });
+
+  //   it('findVarsInPug', () => {
+  //     let { pattern } = options;
+  //     usedVars = findVarsInPug(
+  //       findAllBacktickTemplate(content, pattern),
+  //       pattern,
+  //     );
+  //     expect(usedVars).to.have.members([]);
+  //   });
+
+  //   it('getIntersectedVars', () => {
+  //     let { includes } = options;
+  //     intersectedVars = getIntersectedVars(usedVars, importedVars, includes);
+  //     expect(intersectedVars).to.have.members([]);
+  //   });
+  // });
 });
