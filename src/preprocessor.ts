@@ -63,6 +63,11 @@ const stripPattern = (content: string): string => {
  * backtick이 포함된 문자열 추출
  */
 export const findAllBacktickTemplate = (content: string, pattern: IPattern) => {
+  logPug('---- content ----');
+  logPug(content);
+  logPug('---- pattern ----');
+  logPug(pattern);
+
   let rst;
   try {
     rst = XRegExp.matchRecursive(content, pattern.start, pattern.end, 'gi');
@@ -70,6 +75,7 @@ export const findAllBacktickTemplate = (content: string, pattern: IPattern) => {
       .map((match: string) => match.replace(/\/\/.*$/gm, '').trim())
       .filter((item: string) => !/\\n/.test(item));
   } catch (error) {
+    logPug(error);
     console.error(
       '[pug-tsx] options.start에 backtick 시작 문자열을 등록하세요.',
     );
@@ -102,7 +108,8 @@ export const findVarsInPug = (contents: any[], pattern: IPattern): string[] => {
         pugTemplates.forEach((pug: string) => {
           content = content.replace(pug, '');
         });
-        content = content.replace(/\$\{pug``\}/g, 'test');
+        // content = content.replace(/\$\{pug``\}/g, 'test');
+        content = content.replace(/\$\{pug`(\s)*`\}/g, 'test');
         logPug('---- before ----');
         logPug(content);
         // content = stripPattern(content);

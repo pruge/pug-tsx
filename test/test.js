@@ -396,34 +396,142 @@ describe('pug-tsx', () => {
     });
   });
 
-  // describe('./test/pages/temp.tsx', () => {
-  //   let importedVars, usedVars, intersectedVars;
-  //   let content, options;
+  describe('./test/components/CardToolbar.tsx', () => {
+    let importedVars, usedVars, intersectedVars;
+    let content, options;
 
-  //   before(() => {
-  //     const file = './test/pages/temp.tsx';
-  //     content = fs.readFileSync(file, 'utf8');
-  //     options = getOptions({ start: ['gql`', '\\{`'] });
-  //   });
+    before(() => {
+      const file = './test/components/CardToolbar.tsx';
+      content = fs.readFileSync(file, 'utf8');
+      options = getOptions({ start: ['gql`', '\\{`'] });
+    });
 
-  //   it('findVarsInImport', () => {
-  //     importedVars = findVarsInImport(content);
-  //     expect(importedVars).to.have.members([]);
-  //   });
+    it('findVarsInImport', () => {
+      importedVars = findVarsInImport(content);
+      expect(importedVars).to.have.members([
+        'React',
+        'clsx',
+        'useCards',
+        'makeStyles',
+        'Toolbar',
+        'IconButton',
+        'MailIcon',
+        'OneIcon',
+        'TwoIcon',
+        'FullIcon',
+        'SomeIcon',
+        'ToggleIconButton',
+      ]);
+    });
 
-  //   it('findVarsInPug', () => {
-  //     let { pattern } = options;
-  //     usedVars = findVarsInPug(
-  //       findAllBacktickTemplate(content, pattern),
-  //       pattern,
-  //     );
-  //     expect(usedVars).to.have.members([]);
-  //   });
+    it('findVarsInPug', () => {
+      let { pattern } = options;
+      usedVars = findVarsInPug(
+        findAllBacktickTemplate(content, pattern),
+        pattern,
+      );
+      expect(usedVars).to.have.members([
+        'SomeIcon',
+        'FullIcon',
+        'props',
+        'Toolbar',
+        'clsx',
+        'classes',
+        'cardScrolling',
+        'IconButton',
+        'setColumn',
+        'getColor',
+        'OneIcon',
+        'TwoIcon',
+        'ToggleIconButton',
+        'test',
+      ]);
+    });
 
-  //   it('getIntersectedVars', () => {
-  //     let { includes } = options;
-  //     intersectedVars = getIntersectedVars(usedVars, importedVars, includes);
-  //     expect(intersectedVars).to.have.members([]);
-  //   });
-  // });
+    it('getIntersectedVars', () => {
+      let { includes } = options;
+      intersectedVars = getIntersectedVars(usedVars, importedVars, includes);
+      expect(intersectedVars).to.have.members([
+        'SomeIcon',
+        'FullIcon',
+        'Toolbar',
+        'clsx',
+        'IconButton',
+        'OneIcon',
+        'TwoIcon',
+        'ToggleIconButton',
+        'React',
+      ]);
+    });
+  });
+
+  describe('./test/components/AllTags.tsx', () => {
+    let importedVars, usedVars, intersectedVars;
+    let content, options;
+
+    before(() => {
+      const file = './test/components/AllTags.tsx';
+      content = fs.readFileSync(file, 'utf8');
+      options = getOptions({ start: ['gql`', '\\{`'] });
+    });
+
+    it('findVarsInImport', () => {
+      importedVars = findVarsInImport(content);
+      expect(importedVars).to.have.members([
+        'React',
+        'useState',
+        'useTags',
+        'useCards',
+        'joinTags',
+        'addmoveListCache',
+        'addmoveSubListCache',
+        'makeStyles',
+        'Collapse',
+        'Divider',
+        'Typography',
+        'Alert',
+        'Tags',
+      ]);
+    });
+
+    it('findVarsInPug', () => {
+      let { pattern } = options;
+      usedVars = findVarsInPug(
+        findAllBacktickTemplate(content, pattern),
+        pattern,
+      );
+      expect(usedVars).to.have.members([
+        'IconButton',
+        'setOpen',
+        'CloseIcon',
+        'Collapse',
+        'open',
+        'Alert',
+        'test',
+        'groups',
+        'Divider',
+        'classes',
+        'Typography',
+        'grouped',
+        'Tags',
+        'isAttachTag',
+        'handleClick',
+        'handleCopyClick',
+        'handleDeleteClick',
+      ]);
+    });
+
+    it('getIntersectedVars', () => {
+      let { includes } = options;
+      intersectedVars = getIntersectedVars(usedVars, importedVars, includes);
+      expect(intersectedVars).to.have.members([
+        'Collapse',
+        'Alert',
+        'Divider',
+        'Typography',
+        'Tags',
+        'React',
+      ]);
+    });
+  });
 });

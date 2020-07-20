@@ -1,6 +1,6 @@
 {
   "name": "webpack-preprocessor-pug-tsx",
-  "version": "0.6.3",
+  "version": "0.6.4",
   "description": "A code preprocessor for Webpack",
   "main": "index.js",
   "repository": "https://github.com/pruge/pug-tsx.git",

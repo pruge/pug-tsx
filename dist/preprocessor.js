@@ -44,6 +44,7 @@ exports.findVarsInImport = function (content) {
 };
 /**
  * value 값 배열로 변환
+ * TODO ${} 만 제거해야하는데, {}, #{}까지 제거...
  */
 var stripVars = function (variables) {
     return variables.map(function (variable) { return variable.value; });
@@ -69,6 +70,10 @@ var stripPattern = function (content) {
  * backtick이 포함된 문자열 추출
  */
 exports.findAllBacktickTemplate = function (content, pattern) {
+    logPug('---- content ----');
+    logPug(content);
+    logPug('---- pattern ----');
+    logPug(pattern);
     var rst;
     try {
         rst = XRegExp.matchRecursive(content, pattern.start, pattern.end, 'gi');
@@ -77,6 +82,7 @@ exports.findAllBacktickTemplate = function (content, pattern) {
             .filter(function (item) { return !/\\n/.test(item); });
     }
     catch (error) {
+        logPug(error);
         console.error('[pug-tsx] options.start에 backtick 시작 문자열을 등록하세요.');
         throw error;
     }
@@ -101,7 +107,8 @@ exports.findVarsInPug = function (contents, pattern) {
                 pugTemplates.forEach(function (pug) {
                     content = content.replace(pug, '');
                 });
-                content = content.replace(/\$\{pug``\}/g, 'test');
+                // content = content.replace(/\$\{pug``\}/g, 'test');
+                content = content.replace(/\$\{pug`(\s)*`\}/g, 'test');
                 logPug('---- before ----');
                 logPug(content);
                 // content = stripPattern(content);
