@@ -1,228 +1,59 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React from 'react';
 import clsx from 'clsx';
-import { useAuth } from '@lib/contexts';
+import { useCards } from '@lib/contexts';
 
-import { makeStyles, useTheme } from '@material-ui/core/styles';
+import { makeStyles } from '@material-ui/core/styles';
 
-import Paper from '@material-ui/core/Paper';
-import InputBase from '@material-ui/core/InputBase';
-import Collapse from '@material-ui/core/Collapse';
-import Button from '@material-ui/core/Button';
+import Toolbar from '@material-ui/core/Toolbar';
 import IconButton from '@material-ui/core/IconButton';
-import Card from '@material-ui/core/Card';
-import CardContent from '@material-ui/core/CardContent';
-import CardActions from '@material-ui/core/CardActions';
-import ClickAwayListener from '@material-ui/core/ClickAwayListener';
-import NoSsr from '@material-ui/core/NoSsr';
-import Typography from '@material-ui/core/Typography';
 
-import DeleteIcon from '@material-ui/icons/DeleteOutline';
-import orange from '@material-ui/core/colors/orange';
+import MailIcon from '@material-ui/icons/Mail';
+import OneIcon from '@material-ui/icons/LooksOneOutlined';
+import TwoIcon from '@material-ui/icons/LooksTwoOutlined';
+import FullIcon from '@material-ui/icons/Brightness1';
+import SomeIcon from '@material-ui/icons/Brightness3';
 
-import ProgressButton from '@components/base/ProgressButton';
+import ToggleIconButton from '@components/base/ToggleIconButton';
 
-interface Props {
-  elevation?: number;
-  preserve?: boolean;
-
-  owner: number;
-
-  title: string;
-  titlePlacehold: string;
-
-  brief?: string;
-  briefPlacehold?: string;
-
-  onSave?: Function;
-  onClose?: Function;
-  onDelete?: Function;
-
-  loading?: boolean;
-
-  message?: string;
-}
-
-function WriteBox({
-  elevation = 0,
-  preserve = false,
-
-  owner,
-
-  title,
-  titlePlacehold,
-
-  brief = undefined,
-  briefPlacehold,
-
-  onSave,
-  onClose,
-  onDelete,
-
-  loading,
-  message = '',
-}: Props) {
+interface Props {}
+function CardToolbar(props: Props) {
   const classes = useStyles();
-  const titleRef = useRef(null);
-  const briefRef = useRef(null);
 
-  const { user } = useAuth();
+  const { cardScrolling, setColumn, column } = useCards();
 
-  const [edTitle, setEdTitle] = useState(title);
-  const [edBrief, setEdBrief] = useState(brief);
-  const [isFocussed, setFocussed] = useState(false);
-  const [color, setColor] = useState('default');
-
-  const theme = useTheme();
-
-  useEffect(() => {
-    setEdTitle(title);
-    setEdBrief(brief);
-  }, [title, brief]);
-
-  const handleClose = () => {
-    titleRef?.current?.blur();
-    briefRef?.current?.blur();
-
-    init();
-    onClose && onClose();
-    setFocussed(false);
-  };
-
-  const handleSave = async () => {
-    const resp = await onSave({ title: edTitle, brief: edBrief });
-    if (resp === false) {
-      return;
-    }
-    setFocussed(false);
-    if (!preserve) {
-      init();
-    }
-  };
-
-  const init = () => {
-    setEdTitle(title);
-    setEdBrief(brief);
-  };
+  function getColor(num: number) {
+    return num === column ? 'secondary' : 'default';
+  }
 
   return pug`
-    NoSsr
-      Card(
-        elevation=isFocussed ? 2 : elevation
-        classes={ root: classes.paperWrapper }
-        style={ background: theme.custom.palette.tag[color] }
+    div(...props)
+      Toolbar(
+        disableGutters
+        classes={
+          root: clsx(classes.toolbarHeight, {[classes.toolbarBorder]: cardScrolling}),
+          regular: classes.toolbarHeight
+        }
       )
-        Collapse(
-          classes={ wrapperInner: classes.wrapper }
-          in=isFocussed
-          collapsedHeight='2.7rem'
-        )
-          InputBase(
-            placeholder=isFocussed || brief === undefined ? titlePlacehold : briefPlacehold
-            classes={
-              root: classes.inputTitleRoot,
-              input: classes.inputTitleInput
-            }
-            disabled=${owner !== user?.userId}
-            inputProps={ 'aria-label': titlePlacehold }
-            value=edTitle
-            inputRef=titleRef
-            onFocus=() => setFocussed(true)
-            onChange=(event) => setEdTitle(event.target.value)
-          )
-          if isFocussed && brief !== undefined
-            div
-              InputBase(
-                placeholder=briefPlacehold
-                classes={
-                  root: classes.inputBriefRoot,
-                  input: classes.inputBriefInput
-                }
-                inputProps={ 'aria-label': briefPlacehold}
-                value=edBrief
-                inputRef=briefRef
-                onChange=(event) => setEdBrief(event.target.value)
-                fullWidth
-                multiline
-              )
-          if isFocussed
-            CardActions(className=classes.actions)
-              Typography(className=classes.message) #{message}
-              Button(onClick=handleClose) Cancel
-              ProgressButton(
-                variant='contained'
-                color='secondary'
-                onClick=handleSave
-                loading=loading
-              ) Save (s)
+        IconButton(edge='start' onClick=() => setColumn(1) color=getColor(1))
+          OneIcon
+        IconButton(edge='start' onClick=() => setColumn(2) color=getColor(2))
+          TwoIcon
 
-          if onDelete
-            IconButton(className=classes.delete onClick=onDelete)
-              DeleteIcon
+        ToggleIconButton(edge='start' iconA=${pug`SomeIcon`} iconB=${pug`FullIcon`})
   `;
 }
 
-export default WriteBox;
+export default CardToolbar;
 
 const useStyles = makeStyles((theme) => ({
-  paperWrapper: {
-    transition: theme.transitions.create('all', {
-      easing: theme.transitions.easing.easeIn,
-      duration: theme.transitions.duration.complex,
-    }),
-    display: 'flex',
-    flexDirection: 'column',
-    flex: 1,
-    height: '100%',
-    marginRight: theme.spacing(0.5),
-    position: 'relative',
+  toolbarBorder: {
+    zIndex: 10,
+    boxShadow: '0 0 0 4px white, 0 6px 4px black',
   },
-  wrapper: {
-    display: 'flex',
-    flexDirection: 'column',
-
-    '&:hover > $delete': {
-      opacity: 1,
-    },
+  toolbarHeight: {
+    minHeight: theme.spacing(3),
   },
-
-  inputTitleRoot: {
-    ...theme.custom.fontFamily.metropolis,
-    padding: theme.spacing(1.25, 2),
-  },
-  inputTitleInput: {
-    fontWeight: 500,
-    fontSize: '1rem',
-    padding: 0,
-    lineHeight: '1rem',
-    verticalAlign: 'middle',
-    color: theme.palette.text.primary,
-  },
-
-  inputBriefRoot: {
-    ...theme.custom.fontFamily.roboto,
-    padding: theme.spacing(0.5, 2, 1.5, 2),
-  },
-  inputBriefInput: {
-    fontWeight: 400,
-    fontSize: '0.88rem',
-    minHeight: theme.spacing(10),
-    padding: 0,
-    color: theme.palette.text.primary,
-  },
-  actions: {
-    display: 'flex',
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-  },
-  delete: {
-    opacity: 0,
-    position: 'absolute',
-    top: -1,
-    right: 1,
-  },
-  message: {
-    flex: 1,
-    color: orange[900],
-    paddingLeft: theme.spacing(1),
+  selected: {
+    backgroundColor: theme.palette.secondary.light,
   },
 }));

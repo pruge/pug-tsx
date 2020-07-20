@@ -51,8 +51,12 @@ var stripVars = function (variables) {
 var stripPattern = function (content) {
     try {
         // const exclude = XRegExp.matchRecursive(content, '\\$\\{|\\{', '\\}', 'gi');
-        var exclude = XRegExp.matchRecursive(content, '\\$\\{|\\{|#\\{', '\\}', 'gi');
+        var exclude = XRegExp.matchRecursive(content, '\\$\\{|\\{|#\\{', 
+        // '\\$\\{|#\\{',
+        '\\}', 'gi');
         exclude.forEach(function (item) {
+            logPug('---- item ----');
+            logPug(item);
             content = content.replace(item, '');
         });
     }
@@ -97,10 +101,15 @@ exports.findVarsInPug = function (contents, pattern) {
                 pugTemplates.forEach(function (pug) {
                     content = content.replace(pug, '');
                 });
-                content = content.replace(/pug``/, '');
-                content = stripPattern(content);
+                content = content.replace(/\$\{pug``\}/g, 'test');
+                logPug('---- before ----');
+                logPug(content);
+                // content = stripPattern(content);
+                // logPug('---- after ----');
+                // logPug(content);
             }
             try {
+                logPug('---- content ----');
                 logPug(content);
                 variables = pug_uses_variables_1.findVariablesInTemplate(content);
                 usedVars = usedVars.concat(stripVars(variables));

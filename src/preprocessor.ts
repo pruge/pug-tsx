@@ -32,6 +32,7 @@ export const findVarsInImport = (content: string): string[] => {
 
 /**
  * value 값 배열로 변환
+ * TODO ${} 만 제거해야하는데, {}, #{}까지 제거...
  */
 const stripVars = (variables: any[]): string[] => {
   return variables.map((variable: any) => variable.value);
@@ -43,10 +44,13 @@ const stripPattern = (content: string): string => {
     const exclude = XRegExp.matchRecursive(
       content,
       '\\$\\{|\\{|#\\{',
+      // '\\$\\{|#\\{',
       '\\}',
       'gi',
     );
     exclude.forEach((item: string) => {
+      logPug('---- item ----');
+      logPug(item);
       content = content.replace(item, '');
     });
   } catch (error) {
@@ -98,11 +102,16 @@ export const findVarsInPug = (contents: any[], pattern: IPattern): string[] => {
         pugTemplates.forEach((pug: string) => {
           content = content.replace(pug, '');
         });
-        content = content.replace(/pug``/, '');
-        content = stripPattern(content);
+        content = content.replace(/\$\{pug``\}/g, 'test');
+        logPug('---- before ----');
+        logPug(content);
+        // content = stripPattern(content);
+        // logPug('---- after ----');
+        // logPug(content);
       }
 
       try {
+        logPug('---- content ----');
         logPug(content);
         variables = findVariablesInTemplate(content);
         usedVars = usedVars.concat(stripVars(variables));
