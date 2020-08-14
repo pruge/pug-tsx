@@ -28,19 +28,19 @@ describe('pug-tsx', () => {
       expect(importedVars).to.have.members([]);
     });
 
-    it('findVarsInPug', () => {
-      let { pattern } = options;
-      usedVars = findVarsInPug(
-        findAllBacktickTemplate(content, pattern),
-        pattern,
-      );
-      expect(usedVars).to.have.members([]);
-    });
+    // it('findVarsInPug', () => {
+    //   let { pattern } = options;
+    //   usedVars = findVarsInPug(
+    //     findAllBacktickTemplate(content, pattern),
+    //     pattern,
+    //   );
+    //   expect(usedVars).to.have.members([]);
+    // });
 
-    it('getIntersectedVars', () => {
-      let { includes } = options;
-      intersectedVars = getIntersectedVars(usedVars, importedVars, includes);
-      expect(intersectedVars).to.have.members([]);
-    });
+    // it('getIntersectedVars', () => {
+    //   let { includes } = options;
+    //   intersectedVars = getIntersectedVars(usedVars, importedVars, includes);
+    //   expect(intersectedVars).to.have.members([]);
+    // });
   });
 });

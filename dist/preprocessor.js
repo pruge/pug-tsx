@@ -31,16 +31,14 @@ var logPug = debug_1.default('vars:inPug');
  */
 exports.findVarsInImport = function (content) {
     var rst;
-    rst = content.match(/import(.*)from/gm) || [];
+    rst = XRegExp.matchRecursive(content, 'import', " from '", 'gi');
+    logPug('rst', rst);
     rst = rst.map(function (item) {
-        var variable = item
-            .match(/import(.*)from/)[1]
-            .replace(/{|}/g, '')
-            .split(',');
+        var variable = item.replace(/{|}|{\n|\n|\n}/g, '').split(',');
         return variable;
     });
     rst = rst.flat(Infinity).map(function (item) { return item.trim(); });
-    return rst;
+    return rst.filter(function (r) { return !!r; });
 };
 /**
  * value 값 배열로 변환
@@ -83,7 +81,7 @@ exports.findAllBacktickTemplate = function (content, pattern) {
     }
     catch (error) {
         logPug(error);
-        console.error('[pug-tsx] options.start에 backtick 시작 문자열을 등록하세요.');
+        console.error('[pug-tsx] Register the backtick start string in options.start.');
         throw error;
     }
     logPug(rst);
@@ -104,6 +102,7 @@ exports.findVarsInPug = function (contents, pattern) {
             if (/pug`([\w\s\S]*)`/.test(content)) {
                 usedVars = usedVars.concat(exports.findVarsInPug(pugTemplates, pattern));
                 // 내부 ${pub``} 제거
+                // bug: 짦은 요소 사용시 다른 요소를 제거할 위험이 있다.
                 pugTemplates.forEach(function (pug) {
                     content = content.replace(pug, '');
                 });

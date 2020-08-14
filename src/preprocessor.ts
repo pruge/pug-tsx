@@ -15,19 +15,16 @@ export interface IWebpackLoaderContext {
  */
 export const findVarsInImport = (content: string): string[] => {
   let rst: any[];
-  rst = content.match(/import(.*)from/gm) || [];
+  rst = XRegExp.matchRecursive(content, 'import', " from '", 'gi');
+  logPug('rst', rst);
   rst = rst.map((item) => {
-    let variable = item
-      .match(/import(.*)from/)[1]
-      .replace(/{|}/g, '')
-      .split(',');
+    let variable = item.replace(/{|}|{\n|\n|\n}/g, '').split(',');
 
     return variable;
   });
 
   rst = rst.flat(Infinity).map((item) => item.trim());
-
-  return rst;
+  return rst.filter((r) => !!r);
 };
 
 /**
@@ -77,7 +74,7 @@ export const findAllBacktickTemplate = (content: string, pattern: IPattern) => {
   } catch (error) {
     logPug(error);
     console.error(
-      '[pug-tsx] options.start에 backtick 시작 문자열을 등록하세요.',
+      '[pug-tsx] Register the backtick start string in options.start.',
     );
     throw error;
   }
@@ -105,6 +102,7 @@ export const findVarsInPug = (contents: any[], pattern: IPattern): string[] => {
         usedVars = usedVars.concat(findVarsInPug(pugTemplates, pattern));
 
         // 내부 ${pub``} 제거
+        // bug: 짦은 요소 사용시 다른 요소를 제거할 위험이 있다.
         pugTemplates.forEach((pug: string) => {
           content = content.replace(pug, '');
         });
