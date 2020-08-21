@@ -17,6 +17,8 @@ Bring the awesome "pug in typescript" to the Webpack, and more.
   - [`includes`](#includes)
   - [`replace`](#replace)
   - [`start`](#start)
+- [Basic Process](#basic-process)
+- [React-native, Expo](#react-native-expo)
 - [Caveats](#caveats)
   - [The starting element of the backtick-wrapped phrase should be added to the start of options.](#the-starting-element-of-the-backtick-wrapped-phrase-should-be-added-to-the-start-of-options)
   - [There is no need to include `/** @jsx jsx */` in the document.](#there-is-no-need-to-include--jsx-jsx--in-the-document)
@@ -109,7 +111,7 @@ Expressed as a regular expression string.
 -  `[^;] is the starting string for template strings.
 ```
 
-#### Basic Process
+## Basic Process
 
 Edit the document as follows:
 
@@ -159,6 +161,33 @@ return pug`
 
 ...
 
+```
+
+## React-native, Expo
+
+- `metro.config.js`
+
+```javascript
+const { getDefaultConfig } = require('metro-config');
+const { setOptions } = require('webpack-preprocessor-pug-tsx');
+
+setOptions({
+  start: ['gql`'],
+});
+
+module.exports = (async () => {
+  const {
+    resolver: { sourceExts },
+  } = await getDefaultConfig();
+  return {
+    transformer: {
+      babelTransformerPath: require.resolve('webpack-preprocessor-pug-tsx'),
+    },
+    resolver: {
+      sourceExts: [...sourceExts, 'tsx'],
+    },
+  };
+})();
 ```
 
 ## Caveats

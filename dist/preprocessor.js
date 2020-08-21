@@ -20,25 +20,39 @@ var __spread = (this && this.__spread) || function () {
     return ar;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getOptions = exports.preprocessor = exports.getIntersectedVars = exports.findVarsInPug = exports.findAllBacktickTemplate = exports.findVarsInImport = void 0;
+exports.getOptions = exports.setOptions = exports.transform = exports.preprocessor = exports.getIntersectedVars = exports.findVarsInPug = exports.findAllBacktickTemplate = exports.findVarsInImport = void 0;
 var pug_uses_variables_1 = require("pug-uses-variables");
 var XRegExp = require("xregexp");
 var global_1 = require("./global");
 var debug_1 = require("debug");
+var metro_react_native_babel_transformer_1 = require("metro-react-native-babel-transformer");
+var jsonfile_1 = require("jsonfile");
+var path_1 = require("path");
 var logPug = debug_1.default('vars:inPug');
 /**
  * import한 liabrary의 변수를 추출한다.
  */
 exports.findVarsInImport = function (content) {
     var rst;
-    rst = XRegExp.matchRecursive(content, 'import', " from '", 'gi');
-    logPug('rst', rst);
-    rst = rst.map(function (item) {
-        var variable = item.replace(/{|}|{\n|\n|\n}/g, '').split(',');
-        return variable;
-    });
-    rst = rst.flat(Infinity).map(function (item) { return item.trim(); });
-    return rst.filter(function (r) { return !!r; });
+    try {
+        // export 사용 구문 모두 삭제
+        content = content.replace(/\/\/.*|export.*/gm, '');
+        rst = XRegExp.matchRecursive(content, 'import ', " from '", 'gi');
+        logPug('rst', rst);
+        rst = rst.map(function (item) {
+            var variable = item.replace(/{|}|{\n|\n|\n}/g, '').split(',');
+            return variable;
+        });
+        rst = rst
+            .flat(Infinity)
+            .map(function (item) { return item.trim(); })
+            .filter(function (r) { return !!r; });
+    }
+    catch (error) {
+        logPug(error);
+        throw error;
+    }
+    return rst;
 };
 /**
  * value 값 배열로 변환
@@ -160,6 +174,9 @@ exports.getIntersectedVars = function (usedVars, importedVars, includes) {
  * @returns {string}
  */
 function preprocessor(content) {
+    if (!content.includes('pug`')) {
+        return content;
+    }
     var _a = getOptions(this.query), includes = _a.includes, replace = _a.replace, pattern = _a.pattern;
     var usedVars = exports.findVarsInPug(exports.findAllBacktickTemplate(content, pattern), pattern);
     var importedVars = exports.findVarsInImport(content);
@@ -180,6 +197,54 @@ function preprocessor(content) {
     }
 }
 exports.preprocessor = preprocessor;
+function transform(_a) {
+    var src = _a.src, filename = _a.filename, options = _a.options;
+    if (filename.endsWith('.tsx')) {
+        if (!src.includes('pug`')) {
+            // return src;
+            return metro_react_native_babel_transformer_1.transform({ src: src, filename: filename, options: options });
+        }
+        var opts;
+        try {
+            opts = jsonfile_1.readFileSync(path_1.join(__dirname, '/options.json'));
+        }
+        catch (error) {
+            opts = {};
+        }
+        var _b = getOptions(opts), includes = _b.includes, replace_1 = _b.replace, pattern = _b.pattern;
+        var usedVars = exports.findVarsInPug(exports.findAllBacktickTemplate(src, pattern), pattern);
+        var importedVars = exports.findVarsInImport(src);
+        var intersectedVars = exports.getIntersectedVars(usedVars, importedVars, includes);
+        var replacedVars = intersectedVars.map(function (item) {
+            if (replace_1[item]) {
+                return replace_1[item];
+            }
+            else {
+                return item;
+            }
+        });
+        if (replacedVars.length !== 0) {
+            // return `${replacedVars.join(';\n')};\n${src}`;
+            return metro_react_native_babel_transformer_1.transform({
+                src: replacedVars.join(';\n') + ";\n" + src,
+                filename: filename,
+                options: options,
+            });
+        }
+        else {
+            // return src;
+            return metro_react_native_babel_transformer_1.transform({ src: src, filename: filename, options: options });
+        }
+    }
+    else {
+        return metro_react_native_babel_transformer_1.transform({ src: src, filename: filename, options: options });
+    }
+}
+exports.transform = transform;
+function setOptions(options) {
+    jsonfile_1.writeFileSync(path_1.join(__dirname, '/options.json'), options);
+}
+exports.setOptions = setOptions;
 function getOptions(query) {
     var options = global_1.DEFAULT_OPTIONS;
     options.includes = mergeDedupe([options.includes, query.includes || []]);

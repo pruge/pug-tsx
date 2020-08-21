@@ -1,8 +1,11 @@
 import { findVariablesInTemplate } from 'pug-uses-variables';
 import * as XRegExp from 'xregexp';
 import { DEFAULT_OPTIONS } from './global';
-import { IPreprocessorOption, IPattern } from './type';
+import { IPreprocessorOption, IPattern, ITransform } from './type';
 import debug from 'debug';
+import { transform as upstreamTransformer } from 'metro-react-native-babel-transformer';
+import { readFileSync, writeFileSync } from 'jsonfile';
+import { join } from 'path';
 
 const logPug = debug('vars:inPug');
 
@@ -15,16 +18,25 @@ export interface IWebpackLoaderContext {
  */
 export const findVarsInImport = (content: string): string[] => {
   let rst: any[];
-  rst = XRegExp.matchRecursive(content, 'import', " from '", 'gi');
-  logPug('rst', rst);
-  rst = rst.map((item) => {
-    let variable = item.replace(/{|}|{\n|\n|\n}/g, '').split(',');
+  try {
+    // export 사용 구문 모두 삭제
+    content = content.replace(/\/\/.*|export.*/gm, '');
+    rst = XRegExp.matchRecursive(content, 'import ', " from '", 'gi');
+    logPug('rst', rst);
+    rst = rst.map((item) => {
+      let variable = item.replace(/{|}|{\n|\n|\n}/g, '').split(',');
+      return variable;
+    });
 
-    return variable;
-  });
-
-  rst = rst.flat(Infinity).map((item) => item.trim());
-  return rst.filter((r) => !!r);
+    rst = rst
+      .flat(Infinity)
+      .map((item) => item.trim())
+      .filter((r) => !!r);
+  } catch (error) {
+    logPug(error);
+    throw error;
+  }
+  return rst;
 };
 
 /**
@@ -167,6 +179,9 @@ export function preprocessor(
   this: IWebpackLoaderContext,
   content: string,
 ): string {
+  if (!content.includes('pug`')) {
+    return content;
+  }
   let { includes, replace, pattern } = getOptions(this.query);
   const usedVars = findVarsInPug(
     findAllBacktickTemplate(content, pattern),
@@ -188,6 +203,59 @@ export function preprocessor(
   } else {
     return content;
   }
+}
+
+export function transform({ src, filename, options }: ITransform) {
+  if (filename.endsWith('.tsx')) {
+    if (!src.includes('pug`')) {
+      // return src;
+      return upstreamTransformer({ src, filename, options });
+    }
+    var opts;
+    try {
+      opts = readFileSync(join(__dirname, '/options.json'));
+    } catch (error) {
+      opts = {};
+    }
+
+    let { includes, replace, pattern } = getOptions(opts);
+    const usedVars = findVarsInPug(
+      findAllBacktickTemplate(src, pattern),
+      pattern,
+    );
+    const importedVars = findVarsInImport(src);
+    const intersectedVars = getIntersectedVars(
+      usedVars,
+      importedVars,
+      includes,
+    );
+
+    const replacedVars = intersectedVars.map((item: string) => {
+      if (replace[item]) {
+        return replace[item];
+      } else {
+        return item;
+      }
+    });
+
+    if (replacedVars.length !== 0) {
+      // return `${replacedVars.join(';\n')};\n${src}`;
+      return upstreamTransformer({
+        src: `${replacedVars.join(';\n')};\n${src}`,
+        filename,
+        options,
+      });
+    } else {
+      // return src;
+      return upstreamTransformer({ src, filename, options });
+    }
+  } else {
+    return upstreamTransformer({ src, filename, options });
+  }
+}
+
+export function setOptions(options: Partial<IPreprocessorOption>) {
+  writeFileSync(join(__dirname, '/options.json'), options);
 }
 
 export function getOptions(
