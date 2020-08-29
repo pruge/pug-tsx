@@ -19,7 +19,11 @@ export const buttonGroup = () => {
   const gap = text('gap', '0.5rem');
 
   return pug`
-    ButtonGroup(direction=direction rightAlign=rightAlign gap=gap)
+    ButtonGroup(
+      direction=direction
+      rightAlign=rightAlign
+      gap=gap
+    )
       Button(theme='tertiary') 취소
       Button 확인
   `;

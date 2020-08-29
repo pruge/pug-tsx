@@ -78,6 +78,9 @@ var stripPattern = function (content) {
     }
     return content.replace(/\$\{\}|#\{\}/gm, 'test');
 };
+var stripComments = function (content) {
+    return content.replace(/(\/\*([^*]|[\r\n]|(\*+([^*/]|[\r\n])))*\*+\/)|(\/\/.*)/gm, '');
+};
 /**
  * backtick이 포함된 문자열 추출
  */
@@ -107,7 +110,7 @@ exports.findAllBacktickTemplate = function (content, pattern) {
 exports.findVarsInPug = function (contents, pattern) {
     var usedVars = [];
     var _loop_1 = function () {
-        var content = contents[i];
+        var content = stripComments(contents[i]);
         var pugTemplates = exports.findAllBacktickTemplate(content, pattern);
         var variables = void 0;
         logPug(pugTemplates);
@@ -190,7 +193,8 @@ function preprocessor(content) {
         }
     });
     if (replacedVars.length !== 0) {
-        return replacedVars.join(';\n') + ";\n" + content;
+        var strippedContent = stripComments(content);
+        return replacedVars.join(';\n') + ";\n" + strippedContent;
     }
     else {
         return content;
@@ -225,8 +229,9 @@ function transform(_a) {
         });
         if (replacedVars.length !== 0) {
             // return `${replacedVars.join(';\n')};\n${src}`;
+            var strippedContent = stripComments(src);
             return metro_react_native_babel_transformer_1.transform({
-                src: replacedVars.join(';\n') + ";\n" + src,
+                src: replacedVars.join(';\n') + ";\n" + strippedContent,
                 filename: filename,
                 options: options,
             });

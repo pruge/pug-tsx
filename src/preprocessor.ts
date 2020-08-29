@@ -68,6 +68,13 @@ const stripPattern = (content: string): string => {
   return content.replace(/\$\{\}|#\{\}/gm, 'test');
 };
 
+const stripComments = (content: string): string => {
+  return content.replace(
+    /(\/\*([^*]|[\r\n]|(\*+([^*/]|[\r\n])))*\*+\/)|(\/\/.*)/gm,
+    '',
+  );
+};
+
 /**
  * backtick이 포함된 문자열 추출
  */
@@ -102,7 +109,7 @@ export const findVarsInPug = (contents: any[], pattern: IPattern): string[] => {
   let usedVars: string[] = [];
 
   for (var i = 0; i < contents.length; i++) {
-    let content: string = contents[i];
+    let content: string = stripComments(contents[i]);
     const pugTemplates = findAllBacktickTemplate(content, pattern);
     let variables;
 
@@ -199,7 +206,8 @@ export function preprocessor(
   });
 
   if (replacedVars.length !== 0) {
-    return `${replacedVars.join(';\n')};\n${content}`;
+    const strippedContent = stripComments(content);
+    return `${replacedVars.join(';\n')};\n${strippedContent}`;
   } else {
     return content;
   }
@@ -240,8 +248,9 @@ export function transform({ src, filename, options }: ITransform) {
 
     if (replacedVars.length !== 0) {
       // return `${replacedVars.join(';\n')};\n${src}`;
+      const strippedContent = stripComments(src);
       return upstreamTransformer({
-        src: `${replacedVars.join(';\n')};\n${src}`,
+        src: `${replacedVars.join(';\n')};\n${strippedContent}`,
         filename,
         options,
       });
