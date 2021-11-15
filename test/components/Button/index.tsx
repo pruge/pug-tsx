@@ -1,4 +1,7 @@
-import { jsx, css } from '@emotion/core';
+import { jsx, css } from "@emotion/core";
+
+import "./sideEffects.ts";
+import './sideEffects.ts';
 
 export type ButtonProps = {
   /** 버튼 안의 내용 */

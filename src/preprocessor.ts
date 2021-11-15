@@ -20,8 +20,11 @@ export const findVarsInImport = (content: string): string[] => {
   let rst: any[];
   try {
     // export 사용 구문 모두 삭제
-    content = content.replace(/\/\/.*|export.*/gm, '');
-    rst = XRegExp.matchRecursive(content, 'import ', " from '", 'gi');
+    content = content.replace(/\/\/.*|export.*/gm, "");
+    // remove side effect imports
+    content = content.replace("import '", "'");
+    content = content.replace('import "', '"');
+    rst = XRegExp.matchRecursive(content, 'import ', ' from [\'"]', 'gi');
     logPug('rst', rst);
     rst = rst.map((item) => {
       let variable = item.replace(/{|}|{\n|\n|\n}/g, '').split(',');
