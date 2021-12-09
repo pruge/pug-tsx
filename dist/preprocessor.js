@@ -194,7 +194,7 @@ function preprocessor(content) {
     });
     if (replacedVars.length !== 0) {
         var strippedContent = stripComments(content);
-        return replacedVars.join(';\n') + ";\n" + strippedContent;
+        return strippedContent + "\n\n//appended from pug-tsx\n" + replacedVars.join('\n') + "\n";
     }
     else {
         return content;
